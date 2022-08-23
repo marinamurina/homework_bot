@@ -116,15 +116,17 @@ def check_tokens():
 
 def main():
     """Основная логика работы бота."""
-
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
-
     # дата нулевого запроса Sun May 01 2022 20:00:00 - 1651424400
     current_timestamp = 1651424400
     error = NONE
     status = NONE
 
-    while check_tokens() == True:
+    if check_tokens() is False:
+        logger.critical(
+            'Отсутствие необходимых токенов для работы программы!')
+
+    while True:
         try:
             response = get_api_answer(current_timestamp)
             homeworks = check_response(response)
@@ -148,9 +150,6 @@ def main():
                 error = str(new_error)
                 send_message(bot, message)
             time.sleep(RETRY_TIME)
-    else:
-        logger.critical(
-            'Отсутствие необходимых токенов для работы программы!')
 
 
 if __name__ == '__main__':
