@@ -1,9 +1,9 @@
+import json
 import logging
 import os
 import sys
 import time
 from http import HTTPStatus
-from pickle import NONE
 
 import requests
 import telegram
@@ -46,8 +46,8 @@ def send_message(bot, message):
             chat_id=TELEGRAM_CHAT_ID,
             text=f'{message}',
         )
-    except exceptions.SendMessageProblem as error:
-        raise exceptions.SendMessageProblem(
+    except telegram.TelegramError as error:
+        logger.error(
             f'Ошибка при отправке сообщения:{error}!')
 
 
@@ -59,30 +59,33 @@ def get_api_answer(current_timestamp):
         homework_statuses = requests.get(
             ENDPOINT, headers=HEADERS, params=params
         )
-    except exceptions.GetAPIProblem as error:
-        raise exceptions.GetAPIProblem(
+    except requests.RequestException as error:
+        raise exceptions.GetAPIError(
             f'Ошибка при запросе к сервису API:{error}!')
     if homework_statuses.status_code != HTTPStatus.OK:
-        raise exceptions.StatusNotOK(
+        raise exceptions.StatusNotOKError(
             f'Статус ответа сервера {homework_statuses.status_code}!'
         )
-    response = homework_statuses.json()
+    try:
+        response = homework_statuses.json()
+    except json.JSONDecodeError:
+        raise json.JSONDecodeError('Ошибка перевода ответа из json в python.')
     return response
 
 
 def check_response(response):
     """Проверка ответа API Яндекс.Практикум на корректность."""
-    if not (isinstance(response, dict)):
+    if not isinstance(response, dict):
         raise TypeError('Ответ сервера не является словарем!')
     try:
         homeworks = response['homeworks']
     except KeyError as error:
         raise KeyError(f'Ошибка доступа по ключу - {error}')
-    except exceptions.CheckResponseProblem as error:
-        raise exceptions.CheckResponseProblem(
+    except Exception as error:
+        raise exceptions.CheckResponseError(
             f'Не получен список работ - {error}'
         )
-    if not (isinstance(homeworks, list)):
+    if not isinstance(homeworks, list):
         raise TypeError('Данные не являются списком!')
     return homeworks
 
@@ -105,13 +108,7 @@ def parse_status(homework):
 
 def check_tokens():
     """Проверка доступности переменных окружения."""
-    tokens = (
-        PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID
-    )
-    for token in tokens:
-        if not token:
-            return False
-    return True
+    return all([PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID])
 
 
 def main():
@@ -119,36 +116,35 @@ def main():
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     # дата нулевого запроса Sun May 01 2022 20:00:00 - 1651424400
     current_timestamp = 1651424400
-    error = NONE
-    status = NONE
+    error = None
 
-    if check_tokens() is False:
+    if not check_tokens():
         logger.critical(
             'Отсутствие необходимых токенов для работы программы!')
+        sys.exit(['Отсутствие необходимых токенов для работы программы!'])
 
     while True:
         try:
             response = get_api_answer(current_timestamp)
+            current_timestamp = response.get('current_date')
             homeworks = check_response(response)
             if len(homeworks) == 0:
-                logger.debug('В ответе сервера отсутствуют новые записи.')
-            new_status = (homeworks[0]).get('status')
-            message = parse_status(homeworks[0])
-            if new_status != status:
-                status = new_status
-                send_message(bot, message)
-                logger.info(f'В телеграмм отправлено сообщение: {message}.')
-            else:
                 logger.info('Статус домашней работы не изменился.')
-            current_timestamp = response['current_date']
-            time.sleep(RETRY_TIME)
+            else:
+                message = parse_status(homeworks[0])
+                send_message(bot, message)
+                logger.info(
+                    f'В телеграм отправлено сообщение: {message}')
 
         except Exception as new_error:
             message = f'Сбой в работе программы: {new_error}.'
-            logger.error(f'Сбой в работе программы: {new_error}.')
+            logger.error(f'Сбой в работе программы: {new_error}')
             if error != str(new_error):
                 error = str(new_error)
                 send_message(bot, message)
+                logger.info(f'В телеграм отправлено сообщение: {message}')
+
+        finally:
             time.sleep(RETRY_TIME)
 
 

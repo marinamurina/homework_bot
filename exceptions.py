@@ -1,19 +1,19 @@
-class StatusNotOK(Exception):
+class StatusNotOKError(Exception):
     """Запрос возвращает статус, отличный от статуса 200."""
     pass
 
 
-class GetAPIProblem(Exception):
+class GetAPIError(Exception):
     """При получении ответа от API возникла проблема."""
     pass
 
 
-class SendMessageProblem(Exception):
+class SendMessageError(Exception):
     """Не удалось отправить сообщение в телеграмм."""
     pass
 
 
-class CheckResponseProblem(Exception):
+class CheckResponseError(Exception):
     """Проблемы в функции check_response
     при проверке ответа на корректность."""
     pass
