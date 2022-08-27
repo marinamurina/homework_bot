@@ -123,7 +123,8 @@ def main():
 
     if not check_tokens():
         logger.critical(
-            'Отсутствие необходимых токенов для работы программы!')
+            'Отсутствие необходимых токенов для работы программы!'
+        )
         sys.exit(['Отсутствие необходимых токенов для работы программы!'])
 
     while True:
@@ -137,7 +138,8 @@ def main():
                 message = parse_status(homeworks[0])
                 send_message(bot, message)
                 logger.info(
-                    f'В телеграм отправлено сообщение: {message}')
+                    f'В телеграм отправлено сообщение: {message}'
+                )
 
         except Exception as new_error:
             message = f'Сбой в работе программы: {new_error}.'
