@@ -48,7 +48,8 @@ def send_message(bot, message):
         )
     except telegram.TelegramError as error:
         logger.error(
-            f'Ошибка при отправке сообщения:{error}!')
+            f'Ошибка при отправке сообщения:{error}!'
+        )
 
 
 def get_api_answer(current_timestamp):
@@ -97,12 +98,14 @@ def parse_status(homework):
         homework_status = homework['status']
     except KeyError as key_error:
         raise KeyError(
-            f'Отсутствуют ожидаемые ключи - {key_error}!')
+            f'Отсутствуют ожидаемые ключи - {key_error}!'
+        )
     try:
         verdict = HOMEWORK_STATUSES[homework_status]
     except KeyError as key_error:
         raise KeyError(
-            f'Неизвестный статус домашней работы - {key_error}!')
+            f'Неизвестный статус домашней работы - {key_error}!'
+        )
     return f'Изменился статус проверки работы "{homework_name}". {verdict}'
 
 
