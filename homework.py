@@ -48,7 +48,7 @@ def send_message(bot, message):
         )
     except telegram.TelegramError as error:
         logger.error(
-            f'Ошибка при отправке сообщения:{error}!'
+            f'Ошибка при отправке сообщения: {error}!'
         )
 
 
