@@ -4,7 +4,7 @@ class StatusNotOKError(Exception):
 
 
 class GetAPIError(Exception):
-    """При получении ответа от API возникла проблема."""
+    """При получении ответа от API возникает проблема."""
     pass
 
 
